@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Snowden Archive – Offline PDF Index</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --border: #333;
+      --hover: #1a1a1a;
+      --card: #1c1c1c;
+      --tap-size: 48px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      margin: 0;
+      padding: 16px;
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: #aaa;
+      margin: 0 0 20px;
+      font-size: clamp(0.8rem, 2vw, 1rem);
+      line-height: 1.4;
+    }
+
+    .search-container {
+      max-width: 800px;
+      margin: 0 auto 24px;
+    }
+
+    input#search {
+      width: 100%;
+      padding: 14px 16px;
+      font-size: 16px;
+      background: #fff;
+      border: 2px solid #333;
+      border-radius: 8px;
+      color: #000;
+      -webkit-appearance: none;
+      margin-bottom: 12px;
+    }
+    input#search:focus {
+      outline: none;
+      border-color: #666;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .pill-button {
+      padding: 10px 24px;
+      background: var(--card);
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      font-size: clamp(0.85rem, 2vw, 0.95rem);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pill-button:hover {
+      background: #252525;
+      border-color: #555;
+      transform: translateY(-1px);
+    }
+
+    .pill-button:active {
+      background: #2a2a2a;
+      transform: translateY(0);
+    }
+
+    .pill-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .pill-button:disabled:hover {
+      background: var(--card);
+      border-color: var(--border);
+    }
+
+    .stats {
+      text-align: center;
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      margin: 0 0 24px;
+      padding: 12px;
+      background: var(--card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .stats strong {
+      font-weight: 700;
+      font-size: 1.2em;
+    }
+
+    .directory {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+    .directory:hover {
+      box-shadow: 0 2px 8px rgba(255,255,255,0.1);
+    }
+
+    .dir-header {
+      padding: 16px 20px;
+      background: var(--card);
+      color: #fff;
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: var(--tap-size);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .dir-header:hover {
+      background: #252525;
+    }
+    .dir-header:active {
+      background: #2a2a2a;
+    }
+
+    .arrow {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+    .arrow svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    .directory.collapsed .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .year {
+      border-top: 1px solid var(--border);
+    }
+
+    .year-header {
+      padding: 14px 20px;
+      background: #0a0a0a;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      min-height: var(--tap-size);
+      font-size: clamp(0.9rem, 2vw, 1.05rem);
+      transition: background 0.2s;
+    }
+    .year-header:hover {
+      background: #151515;
+    }
+    .year-header:active {
+      background: #1a1a1a;
+    }
+
+    .year-header .arrow {
+      transition: transform 0.2s;
+      width: 18px;
+      height: 18px;
+    }
+    .year.collapsed .year-header .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .count {
+      color: #888;
+      margin-left: 8px;
+      font-weight: normal;
+      font-size: 0.9em;
+    }
+
+    .count .original {
+      display: inline;
+    }
+
+    .count .filtered {
+      display: none;
+      color: #58a6ff;
+    }
+
+    .count.has-filter .original {
+      display: none;
+    }
+
+    .count.has-filter .filtered {
+      display: inline;
+    }
+
+    .content {
+      display: none;
+      animation: fadeIn 0.2s;
+    }
+    .directory:not(.collapsed) > .content,
+    .year:not(.collapsed) > .content {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      background: #0a0a0a;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    th:first-child {
+      width: 50%;
+    }
+
+    th:last-child {
+      width: 50%;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: clamp(0.85rem, 1.8vw, 0.95rem);
+      vertical-align: top;
+    }
+
+    tr:hover td {
+      background: var(--hover);
+    }
+    tr:active td {
+      background: #252525;
+    }
+
+    a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-block;
+      padding: 4px 0;
+      word-break: break-word;
+      line-height: 1.4;
+    }
+    a:hover {
+      text-decoration: underline;
+      color: #e0e0e0;
+    }
+    a:active {
+      color: #ccc;
+    }
+
+    code {
+      background: #0a0a0a;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: clamp(0.7rem, 1.5vw, 0.85rem);
+      color: #aaa;
+      display: inline-block;
+      font-family: "SF Mono", Monaco, Consolas, monospace;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    /* Tablet breakpoint */
+    @media (max-width: 1024px) {
+      body { padding: 12px; }
+
+      .dir-header {
+        padding: 14px 16px;
+      }
+
+      .year-header {
+        padding: 12px 16px;
+      }
+
+      th, td {
+        padding: 10px 12px;
+      }
+
+      table {
+        min-width: 500px;
+      }
+    }
+
+    /* Mobile breakpoint */
+    @media (max-width: 640px) {
+      body { padding: 8px; }
+
+      .stats {
+        padding: 10px;
+        margin-bottom: 16px;
+      }
+
+      .directory {
+        margin-bottom: 12px;
+      }
+
+      .dir-header {
+        padding: 12px 14px;
+      }
+
+      .year-header {
+        padding: 10px 14px;
+      }
+
+      .button-group {
+        gap: 8px;
+      }
+
+      .pill-button {
+        padding: 8px 18px;
+        font-size: 0.85rem;
+        min-height: 36px;
+      }
+
+      table {
+        min-width: 100%;
+      }
+
+      th, td {
+        padding: 10px;
+      }
+
+      /* Stack layout on mobile */
+      th:last-child,
+      td:last-child {
+        display: none;
+      }
+
+      th:first-child,
+      td:first-child {
+        width: 100%;
+      }
+
+      code {
+        margin-top: 6px;
+        font-size: 0.7rem;
+      }
+    }
+
+    /* Desktop enhancements */
+    @media (min-width: 1025px) {
+      body {
+        padding: 32px;
+      }
+
+      .stats {
+        padding: 16px;
+      }
+
+      .directory {
+        margin-bottom: 20px;
+      }
+
+      .dir-header {
+        padding: 20px 28px;
+      }
+
+      .year-header {
+        padding: 16px 28px;
+      }
+
+      th, td {
+        padding: 14px 20px;
+      }
+
+      table {
+        min-width: 800px;
+      }
+    }
+
+    /* Reduce motion for accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      .arrow,
+      .dir-header,
+      .year-header,
+      .directory {
+        transition: none;
+      }
+      .content {
+        animation: none;
+      }
+    }
+
+    /* Search result highlighting */
+    .search-active {
+      order: -1;
+    }
+
+    .search-hidden {
+      display: none !important;
+    }
+
+    #content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Print styles */
+    @media print {
+      body { background: white; color: black; }
+      .directory, .year { page-break-inside: avoid; }
+      .collapsed .content { display: block !important; }
+      input, .arrow { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Snowden Archive</h1>
+    <p class="subtitle">Offline PDF Index • Fully Local • No Internet</p>
+  </header>
+
+  <div class="search-container">
+    <input type="text" id="search" placeholder="Search documents..." autofocus />
+    <div class="button-group">
+      <button class="pill-button" id="expand-all-btn">Expand All</button>
+      <button class="pill-button" id="collapse-all-btn">Collapse All</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <span id="total-stats">Total: <strong>{TOTAL_FILES}</strong> PDFs</span>
+    <span id="search-stats" style="display: none;"> • Search Match: <strong id="match-count">0</strong> PDFs</span>
+  </div>
+
+  <div id="content">
+    <!-- INJECTED_CONTENT -->
+  </div>
+</div>
+
+<script>
+// SVG arrow icon
+const arrowSVG = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>';
+
+// Toggle collapse/expand
+document.addEventListener('click', e => {
+  const header = e.target.closest('.dir-header, .year-header');
+  if (header) {
+    e.preventDefault();
+    header.parentElement.classList.toggle('collapsed');
+    updateButtonStates();
+  }
+});
+
+// Search functionality with smart reordering and hiding
+const searchInput = document.getElementById('search');
+const searchStatsEl = document.getElementById('search-stats');
+const matchCountEl = document.getElementById('match-count');
+const expandAllBtn = document.getElementById('expand-all-btn');
+const collapseAllBtn = document.getElementById('collapse-all-btn');
+let searchTimeout;
+let originalOrder = [];
+
+// Get all visible (non-hidden) directories and years
+function getVisibleItems() {
+  const dirs = Array.from(document.querySelectorAll('.directory:not(.search-hidden)'));
+  const years = Array.from(document.querySelectorAll('.year:not(.search-hidden)'));
+  return { dirs, years };
+}
+
+// Update button states based on current collapse state
+function updateButtonStates() {
+  const { dirs, years } = getVisibleItems();
+  const allItems = [...dirs, ...years];
+
+  if (allItems.length === 0) {
+    expandAllBtn.disabled = true;
+    collapseAllBtn.disabled = true;
+    return;
+  }
+
+  const allCollapsed = allItems.every(item => item.classList.contains('collapsed'));
+  const allExpanded = allItems.every(item => !item.classList.contains('collapsed'));
+
+  expandAllBtn.disabled = allExpanded;
+  collapseAllBtn.disabled = allCollapsed;
+}
+
+// Expand all visible items
+expandAllBtn.addEventListener('click', () => {
+  const { dirs, years } = getVisibleItems();
+  [...dirs, ...years].forEach(item => {
+    item.classList.remove('collapsed');
+  });
+  updateButtonStates();
+});
+
+// Collapse all visible items
+collapseAllBtn.addEventListener('click', () => {
+  const { dirs, years } = getVisibleItems();
+  [...dirs, ...years].forEach(item => {
+    item.classList.add('collapsed');
+  });
+  updateButtonStates();
+});
+
+searchInput.addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    const term = this.value.toLowerCase().trim();
+    const contentDiv = document.getElementById('content');
+    const directories = Array.from(contentDiv.querySelectorAll('.directory'));
+
+    if (term === '') {
+      // Clear search: restore original order, show all, collapse all
+      searchStatsEl.style.display = 'none';
+
+      directories.forEach((dir, index) => {
+        dir.classList.remove('search-active', 'search-hidden');
+        dir.classList.add('collapsed');
+        dir.style.order = originalOrder[index] || index;
+
+        dir.querySelectorAll('tbody tr').forEach(tr => {
+          tr.style.display = '';
+        });
+
+        dir.querySelectorAll('.year').forEach(year => {
+          year.classList.remove('search-hidden');
+          year.classList.add('collapsed');
+
+          // Reset count to original
+          const countSpan = year.querySelector('.count');
+          if (countSpan) {
+            countSpan.classList.remove('has-filter');
+          }
+        });
+      });
+    } else {
+      // Search: move matching to top, hide non-matching, count matches
+      let totalMatches = 0;
+
+      let matchScores = directories.map((dir, index) => {
+        let dirScore = 0;
+        let dirHasMatch = false;
+
+        dir.querySelectorAll('.year').forEach(year => {
+          let yearHasMatch = false;
+          let yearMatchCount = 0;
+
+          year.querySelectorAll('tbody tr').forEach(tr => {
+            if (tr.textContent.toLowerCase().includes(term)) {
+              tr.style.display = '';
+              yearHasMatch = true;
+              dirHasMatch = true;
+              dirScore++;
+              totalMatches++;
+              yearMatchCount++;
+            } else {
+              tr.style.display = 'none';
+            }
+          });
+
+          // Update year count
+          const countSpan = year.querySelector('.count');
+          if (countSpan) {
+            let filteredSpan = countSpan.querySelector('.filtered');
+            if (!filteredSpan) {
+              // Create filtered count span if doesn't exist
+              const originalText = countSpan.textContent;
+              countSpan.innerHTML = `<span class="original">${originalText}</span><span class="filtered"></span>`;
+              filteredSpan = countSpan.querySelector('.filtered');
+            }
+
+            if (yearHasMatch) {
+              countSpan.classList.add('has-filter');
+              filteredSpan.textContent = `(${yearMatchCount} PDF${yearMatchCount !== 1 ? 's' : ''})`;
+            } else {
+              countSpan.classList.remove('has-filter');
+            }
+          }
+
+          // Show/hide and expand/collapse year based on matches
+          if (yearHasMatch) {
+            year.classList.remove('collapsed', 'search-hidden');
+          } else {
+            year.classList.add('search-hidden');
+          }
+        });
+
+        // Show/hide and expand directory based on matches
+        if (dirHasMatch) {
+          dir.classList.remove('collapsed', 'search-hidden');
+          dir.classList.add('search-active');
+        } else {
+          dir.classList.add('search-hidden');
+          dir.classList.remove('search-active');
+        }
+
+        return { dir, index, score: dirScore, hasMatch: dirHasMatch };
+      });
+
+      // Update search stats
+      matchCountEl.textContent = totalMatches;
+      searchStatsEl.style.display = 'inline';
+
+      // Sort by score (descending), then original order
+      matchScores.sort((a, b) => {
+        if (b.hasMatch !== a.hasMatch) return b.hasMatch - a.hasMatch;
+        if (b.score !== a.score) return b.score - a.score;
+        return a.index - b.index;
+      });
+
+      // Apply new order
+      matchScores.forEach((item, newIndex) => {
+        item.dir.style.order = newIndex;
+      });
+
+      // Scroll to top to show results
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Update button states after search
+    updateButtonStates();
+  }, 150);
+});
+
+// Prevent zoom on input focus (iOS)
+if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  searchInput.addEventListener('focus', function() {
+    this.style.fontSize = '16px';
+  });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  // Ctrl/Cmd + K to focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+
+  // Escape to clear search
+  if (e.key === 'Escape' && document.activeElement === searchInput) {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input'));
+  }
+});
+
+// Initial setup
+document.addEventListener('DOMContentLoaded', () => {
+  // Store original order
+  const directories = document.querySelectorAll('.directory');
+  originalOrder = Array.from(directories).map((_, index) => index);
+
+  // Collapse all initially
+  directories.forEach((dir, index) => {
+    dir.classList.add('collapsed');
+    dir.style.order = index;
+    dir.querySelectorAll('.year').forEach(year => {
+      year.classList.add('collapsed');
+    });
+  });
+
+  // Replace arrow text with SVG
+  document.querySelectorAll('.arrow').forEach(arrow => {
+    arrow.innerHTML = arrowSVG;
+  });
+
+  // Initialize button states
+  updateButtonStates();
+});
+</script>
+
+</body>
+</html>
