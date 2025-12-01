@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Snowden Archive – Interactive Index</title>
+  <meta name="description" content="Interactive, searchable index of all Snowden documents grouped by directory and year."/>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --fg: #c9d1d9;
+      --accent: #58a6ff;
+      --card: #161b22;
+      --border: #30363d;
+      --hover: #21262d;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      margin: 0;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    h1 {
+      font-size: 2.8rem;
+      margin: 0 0 0.5rem;
+      color: #f0f6fc;
+    }
+    .subtitle {
+      color: #8b949e;
+      font-size: 1.2rem;
+    }
+    #search {
+      width: 100%;
+      max-width: 600px;
+      padding: 0.8rem 1.2rem;
+      font-size: 1.1rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--fg);
+      margin: 2rem auto;
+      display: block;
+    }
+    #search::placeholder { color: #8b949e; }
+    .stats {
+      text-align: center;
+      color: #8b949e;
+      margin: 1rem 0 3rem;
+    }
+    .directory {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .dir-header {
+      padding: 1.2rem 1.5rem;
+      background: #1f6feb;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dir-header:hover { background: #1a5fd6; }
+    .toggle {
+      font-size: 1.8rem;
+      transition: transform 0.2s;
+    }
+    .dir-header.collapsed .toggle { transform: rotate(-90deg); }
+    .year-group {
+      border-top: 1px solid var(--border);
+    }
+    .year-header {
+      padding: 1rem 1.5rem;
+      background: #21262d;
+      font-weight: 600;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .year-header:hover { background: var(--hover); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+    }
+    th {
+      background: #161b22;
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #58a6ff;
+    }
+    td {
+      padding: 0.8rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: var(--hover); }
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .filename {
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 0.95rem;
+    }
+    .count {
+      font-size: 0.9rem;
+      color: #8b949e;
+    }
+    .hidden { display: none; }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --fg: #24292f;
+        --card: #f6f8fa;
+        --border: #d0d7de;
+        --hover: #f3f4f6;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Snowden Archive</h1>
+  <p class="subtitle">Interactive & Searchable Document Index</p>
+</header>
+
+<input type="text" id="search" placeholder="Search filenames or paths..." autofocus />
+
+<div class="stats" id="stats">Loading documents...</div>
+
+<div id="content"></div>
+
+<script>
+const contentDiv = document.getElementById('content');
+const searchInput = document.getElementById('search');
+const statsDiv = document.getElementById('stats');
+
+let allFiles = [];
+
+// Group files: directory → year → [files]
+function groupFiles(files) {
+  const grouped = {};
+  files.forEach(f => {
+    const parts = f.rel.split('/');
+    const topDir = parts[0];
+    let year = null;
+    for (const p of parts) {
+      const m = p.match(/(19|20)\d{2}/);
+      if (m) { year = parseInt(m[0]); break; }
+    }
+    if (!grouped[topDir]) grouped[topDir] = {};
+    if (!grouped[topDir][year || 'no-year']) grouped[topDir][year || 'no-year'] = [];
+    grouped[topDir][year || 'no-year'].push(f);
+  });
+  return grouped;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function buildHTML() {
+  const grouped = groupFiles(allFiles);
+  let total = 0;
+  let html = '';
+
+  Object.keys(grouped).sort().forEach(dir => {
+    const years = grouped[dir];
+    const yearKeys = Object.keys(years).map(k => k === 'no-year' ? null : parseInt(k)).sort((a,b) => {
+      if (a === null) return 1;
+      if (b === null) return -1;
+      return a - b;
+    });
+
+    html += `<div class="directory">
+      <div class="dir-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span>${escapeHtml(dir)}</span>
+        <span class="toggle">▼</span>
+      </div>
+      <div class="dir-content">`;
+
+    yearKeys.forEach(y => {
+      const yearStr = y === null ? 'No Year Folder' : y;
+      const files = years[y === null ? 'no-year' : y].sort((a,b) => a.rel.localeCompare(b.rel));
+      total += files.length;
+
+      html += `<div class="year-group">
+        <div class="year-header" onclick="this.nextElementSibling.classList.toggle('hidden')">
+          <span>📅 ${yearStr} <span class="count">(${files.length} files)</span></span>
+          <span class="toggle">▼</span>
+        </div>
+        <table class="hidden">
+          <thead><tr><th>Filename</th><th width="60%">Path</th></tr></thead>
+          <tbody>`;
+      files.forEach(f => {
+        html += `<tr>
+          <td class="filename"><a href="${f.rel}" target="_blank">${escapeHtml(f.name)}</a></td>
+          <td><code>${escapeHtml(f.rel)}</code></td>
+        </tr>`;
+      });
+      html += `</tbody></table></div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  contentDiv.innerHTML = html;
+  statsDiv.textContent = `Found ${total} documents across ${Object.keys(grouped).length} directories`;
+}
+
+// Live search
+searchInput.addEventListener('input', () => {
+  const term = searchInput.value.toLowerCase();
+  document.querySelectorAll('tr').forEach(row => {
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(term) ? '' : 'none';
+  });
+  document.querySelectorAll('.year-group table').forEach(table => {
+    const visible = Array.from(table.querySelectorAll('tr')).some(r => r.style.display !== 'none');
+    table.classList.toggle('hidden', !visible);
+  });
+});
+
+// Load all files from current directory (works when opened locally or on GitHub Pages)
+fetch(location.href)
+  .then(r => r.text())
+  .then(html => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const links = [...doc.querySelectorAll('a[href]')]
+      .map(a => a.getAttribute('href'))
+      .filter(href => href && !href.startsWith('?') && !href.includes('..'))
+      .map(rel => {
+        const name = rel.split('/').pop();
+        return { rel, name };
+      });
+    allFiles = links;
+    buildHTML();
+  })
+  .catch(() => {
+    statsDiv.textContent = "Could not auto-scan. You can still use this page on GitHub Pages or locally.";
+  });
+</script>
+
+</body>
+</html>
