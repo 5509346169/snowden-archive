@@ -45,6 +45,20 @@
       margin: 0 0 20px;
       font-size: clamp(0.8rem, 2vw, 1rem);
       line-height: 1.4;
+      min-height: 1.4em;
+      position: relative;
+    }
+
+    .subtitle-text {
+      position: absolute;
+      left: 0;
+      right: 0;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .subtitle-text.active {
+      opacity: 1;
     }
 
     .search-container {
@@ -594,7 +608,50 @@
 <div class="container">
   <header>
     <h1>Snowden Archive</h1>
-    <p class="subtitle">Snowden Index • Library Index Interface</p>
+    <p class="subtitle" id="subtitle">
+      <!-- Rotating subtitles - edit these lines as needed -->
+      <span class="subtitle-text">Snowden Index • Library Index Interface</span>
+      <span class="subtitle-text">Offline PDF Index • Fully Local • No Internet</span>
+      <span class="subtitle-text">Searchable Document Archive • Privacy Focused</span>
+      <span class="subtitle-text">Classified Documents • Whistleblower Files</span>
+      <!-- Peak tinfoil edition: NSA/CIA special -->
+      <span class="subtitle-text">Now Featuring Every Keyword That Auto-Flags Your NSA File</span>
+      <span class="subtitle-text">CIA-Proof* • *Terms and Black Sites Apply</span>
+      <span class="subtitle-text">Your Router Is Snitching, But This Index Isn’t</span>
+      <span class="subtitle-text">PRISM-Resistant Since Breakfast</span>
+      <span class="subtitle-text">Because “Upstream Collection” Sounds Like a Bad Prog Rock Band</span>
+      <span class="subtitle-text">Stellarwind Called – It Wants Its Metadata Back</span>
+      <span class="subtitle-text">Runs Entirely on DUCTAPE (Definitely Un-Cracked by Three-Letter Agencies Probably Ever)</span>
+      <span class="subtitle-text">MYSTICally Buffering All Your Phone Calls Since 2009</span>
+      <span class="subtitle-text">XKEYSCORE Walked So This Index Could Run</span>
+      <span class="subtitle-text">Vault 7 Leaks Included Free of Charge</span>
+      <span class="subtitle-text">Heartbleed Was Just Foreplay</span>
+      <span class="subtitle-text">Yes, the Microwave Really Is Watching. No, This Isn’t In It.</span>
+      <span class="subtitle-text">ThinThread Approved • TRAILBLAZER Laughs in Obsolete</span>
+      <span class="subtitle-text">Boundless Informant Reported 0 Views (Nice Try, Keith)</span>
+      <span class="subtitle-text">COINTELPRO Reboot Loading… 47% Complete</span>
+      <span class="subtitle-text">Brought to You by the Same Agency That Can’t Secure Its Own Hacking Tools</span>
+      <span class="subtitle-text">Echelon’s Retirement Party Starts Here</span>
+      <span class="subtitle-text">Now With 100% More Plausible Deniability</span>
+      <span class="subtitle-text">If You’re Reading This, Your Smart Fridge Already Reported You</span>
+      <span class="subtitle-text">Three Hops From Kevin Bacon? Cute. We’re Zero Hops From Reality.</span>
+      <!-- Even more rotating subtitles dripping with irony -->
+      <span class="subtitle-text">Because Trusting Cloud Storage Worked Out So Well Last Time</span>
+      <span class="subtitle-text">Your Personal Offline Stash of Things Governments Wish You’d Forget</span>
+      <span class="subtitle-text">100% Air-Gapped • 0% Faith in Humanity</span>
+      <span class="subtitle-text">Now With All the Documents They Swore Didn’t Exist</span>
+      <span class="subtitle-text">Localhost: The Last Server You Can Still Trust</span>
+      <span class="subtitle-text">Ctrl+F Through History’s Most Expensive Cover-Ups</span>
+      <span class="subtitle-text">No Telemetry • No Backdoors • No Coping Mechanism</span>
+      <span class="subtitle-text">For When “Nothing to Hide” Stops Being Convincing</span>
+      <span class="subtitle-text">Runs Beautifully on the Laptop You’ll Eventually Wipe With a Magnet</span>
+      <span class="subtitle-text">Because Someone Has to Archive the Receipts</span>
+      <span class="subtitle-text">Proudly Hosted Nowhere Near Virginia</span>
+      <span class="subtitle-text">The Index They’ll Subpoena in Their Nightmares</span>
+      <span class="subtitle-text">Privacy Respecting • Authority Disrespecting</span>
+      <span class="subtitle-text">Bringing Classified to the Masses, One Encrypted Drive at a Time</span>
+      <span class="subtitle-text">Yes, It’s Still Illegal in Some Countries. No, We Don’t Care.</span>
+    </p>
   </header>
 
   <div class="search-container">
@@ -7058,6 +7115,33 @@ document.addEventListener('keydown', e => {
 
 // Initial setup
 document.addEventListener('DOMContentLoaded', () => {
+  // Rotating subtitle animation
+  const subtitleTexts = document.querySelectorAll('.subtitle-text');
+  let currentIndex = 0;
+
+  function rotateSubtitle() {
+    // Fade out current
+    subtitleTexts[currentIndex].classList.remove('active');
+
+    // Move to next
+    currentIndex = (currentIndex + 1) % subtitleTexts.length;
+
+    // Fade in next after 300ms
+    setTimeout(() => {
+      subtitleTexts[currentIndex].classList.add('active');
+    }, 300);
+  }
+
+  // Show first subtitle
+  if (subtitleTexts.length > 0) {
+    subtitleTexts[0].classList.add('active');
+
+    // Start rotation if there are multiple subtitles
+    if (subtitleTexts.length > 1) {
+      setInterval(rotateSubtitle, 2300); // 2s display + 0.3s fade
+    }
+  }
+
   // Store original order
   const directories = document.querySelectorAll('.directory');
   originalOrder = Array.from(directories).map((_, index) => index);
